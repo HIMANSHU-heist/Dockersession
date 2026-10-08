@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docker Explained in 3D — Why, What, How, DevOps & MLOps</title>
+<style>
+  :root{--blue:#2496ed;--cyan:#38e1ff;--bg:#050b18;--card:rgba(8,16,36,.78);--text:#e6eefc;--mut:#9db2d6;--ok:#4ade80;--bad:#fb7185;--warn:#fbbf24}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;line-height:1.6;overflow-x:hidden}
+  #bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block}
+  #progress{position:fixed;top:0;left:0;height:4px;width:0;background:linear-gradient(90deg,var(--blue),var(--cyan));z-index:50;box-shadow:0 0 12px var(--cyan)}
+  #dots{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:40;display:flex;flex-direction:column;gap:10px}
+  #dots a{width:11px;height:11px;border-radius:50%;background:#2b3b5e;border:1px solid #4b6194;display:block;transition:.3s}
+  #dots a.on{background:var(--cyan);box-shadow:0 0 12px var(--cyan);transform:scale(1.35)}
+  #hud{position:fixed;left:16px;bottom:14px;z-index:40;font-size:12px;color:var(--mut);background:rgba(5,11,24,.6);padding:6px 12px;border-radius:20px;backdrop-filter:blur(6px)}
+  main{position:relative;z-index:10}
+  section{min-height:100vh;display:flex;align-items:center;padding:40px 5vw}
+  section.right{justify-content:flex-end}
+  .card{width:min(560px,100%);background:var(--card);border:1px solid rgba(80,140,255,.25);border-radius:20px;padding:28px 30px;backdrop-filter:blur(14px);box-shadow:0 20px 60px rgba(0,0,0,.5),inset 0 0 40px rgba(36,150,237,.06);opacity:.0;transform:translateY(40px);transition:.8s}
+  section.active .card{opacity:1;transform:none}
+  .tag{display:inline-block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);border:1px solid rgba(56,225,255,.4);padding:2px 10px;border-radius:20px;margin-bottom:10px}
+  h1{font-size:clamp(34px,5vw,56px);line-height:1.1;background:linear-gradient(90deg,#fff,var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:12px}
+  h2{font-size:clamp(24px,3vw,32px);margin-bottom:10px;line-height:1.2}
+  p{color:#cfdcf5;margin-bottom:10px;font-size:15.5px}
+  b,strong{color:#fff}
+  ul{margin:8px 0 10px 20px;color:#cfdcf5;font-size:15px}
+  li{margin-bottom:5px}
+  .why{border-left:3px solid var(--warn);padding:6px 12px;background:rgba(251,191,36,.07);border-radius:0 10px 10px 0;margin:10px 0;font-size:14.5px}
+  .why span{color:var(--warn);font-weight:700}
+  .how{border-left:3px solid var(--ok);padding:6px 12px;background:rgba(74,222,128,.07);border-radius:0 10px 10px 0;margin:10px 0;font-size:14.5px}
+  .how span{color:var(--ok);font-weight:700}
+  pre{background:#020712;border:1px solid #1d2d52;border-radius:12px;padding:12px 14px;overflow-x:auto;font-size:13px;line-height:1.5;color:#a5f3fc;margin:10px 0;font-family:'Cascadia Code',Consolas,Menlo,monospace}
+  pre .c{color:#64748b}
+  code{font-family:Consolas,Menlo,monospace;background:#0b1630;color:#7dd3fc;padding:1px 6px;border-radius:5px;font-size:13.5px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:8px 0}
+  th,td{padding:7px 8px;border-bottom:1px solid #1d2d52;text-align:left;vertical-align:top}
+  th{color:var(--cyan)}
+  .btn{display:inline-block;margin-top:10px;padding:10px 20px;border-radius:30px;background:linear-gradient(90deg,var(--blue),var(--cyan));color:#021;font-weight:700;text-decoration:none}
+  .scroll{margin-top:14px;color:var(--mut);font-size:13px;animation:b 1.6s infinite}
+  @keyframes b{50%{transform:translateY(6px)}}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .mini{background:rgba(36,150,237,.1);border:1px solid rgba(36,150,237,.3);border-radius:10px;padding:8px 10px;font-size:13px}
+  .mini b{display:block;color:var(--cyan)}
+  @media(max-width:900px){
+    section,section.right{align-items:flex-end;justify-content:center;padding:20px 12px 50px}
+    .card{padding:20px;max-height:62vh;overflow-y:auto}
+    #dots{display:none}
+  }
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div id="progress"></div>
+<nav id="dots"></nav>
+<div id="hud">🖱 Move mouse to tilt the 3D world · Scroll to travel</div>
+
+<main>
+  <section data-scene="0" data-title="Intro">
+    <div class="card">
+      <span class="tag">3D Interactive Guide</span>
+      <h1>Docker, explained in 3D</h1>
+      <p>Everything about Docker — <b>what</b> it is, <b>why</b> it exists, <b>how</b> it works inside, and how it powers <b>DevOps, MLOps and AI</b> — in one scroll.</p>
+      <p>Docker packages your application <b>+ dependencies + runtime + configuration</b> into one portable unit that runs the same way on any laptop, server or cloud.</p>
+      <div class="scroll">▼ Scroll down to start the journey</div>
+    </div>
+  </section>
+
+  <section class="right" data-scene="1" data-title="Why">
+    <div class="card">
+      <span class="tag">Step 1 · Why</span>
+      <h2>The problem: “It works on my machine!”</h2>
+      <p>Your project needs Python 3.11, numpy, torch, FastAPI, some Linux libraries, environment variables, a CUDA version…</p>
+      <ul>
+        <li>Your laptop: Python <b style="color:var(--ok)">3.11</b> ✅</li>
+        <li>Teammate's laptop: Python <b style="color:var(--bad)">3.9</b> ❌</li>
+        <li>Server: a library is <b style="color:var(--bad)">missing</b> ❌</li>
+        <li>GPU box: <b style="color:var(--bad)">CUDA mismatch</b> ❌</li>
+      </ul>
+      <div class="why"><span>Purpose:</span> remove environment differences so the <b>same package</b> behaves identically everywhere — dev, test, staging, production.</div>
+      <p>Watch the 3D scene: the same code travels to a different machine and breaks. Docker fixes exactly this.</p>
+    </div>
+  </section>
+
+  <section data-scene="2" data-title="VM vs Container">
+    <div class="card">
+      <span class="tag">Step 2 · What</span>
+      <h2>Containers vs Virtual Machines</h2>
+      <p>A <b>VM</b> carries a full guest operating system per app (heavy, slow to boot). A <b>container</b> only carries the app and its libraries — all containers <b>share the host's kernel</b>.</p>
+      <table>
+        <tr><th></th><th>Container</th><th>VM</th></tr>
+        <tr><td>Startup</td><td>Seconds / ms</td><td>Minutes</td></tr>
+        <tr><td>Size</td><td>MBs</td><td>GBs</td></tr>
+        <tr><td>Kernel</td><td>Shared with host</td><td>Own guest kernel</td></tr>
+        <tr><td>Isolation</td><td>Process-level</td><td>Stronger (full OS)</td></tr>
+      </table>
+      <div class="how"><span>Remember:</span> Docker is <b>not</b> a full VM. Lighter and faster, but don't treat it as perfect security isolation.</div>
+    </div>
+  </section>
+
+  <section class="right" data-scene="3" data-title="Dockerfile → Image → Container">
+    <div class="card">
+      <span class="tag">Step 3 · How</span>
+      <h2>Dockerfile → Image → Container</h2>
+      <div class="grid2">
+        <div class="mini"><b>Dockerfile</b>The recipe: text file of instructions.</div>
+        <div class="mini"><b>Image</b>Read-only blueprint built from the recipe.</div>
+        <div class="mini"><b>Container</b>A running instance of an image (a process).</div>
+        <div class="mini"><b>Docker Engine</b>Background daemon that does all the work.</div>
+      </div>
+      <p style="margin-top:10px">One image can start <b>many</b> containers. Image = class, container = object.</p>
+<pre>FROM python:3.11-slim        <span class="c"># base image</span>
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+CMD ["python", "app.py"]</pre>
+<pre>docker build -t my-app .     <span class="c"># recipe → image</span>
+docker run --rm my-app       <span class="c"># image → container</span></pre>
+      <div class="how"><span>Behind the scenes:</span> CLI talks to <code>dockerd</code> → checks local images → pulls from Docker Hub if missing → creates container → starts the process.</div>
+    </div>
+  </section>
+
+  <section data-scene="3" data-title="Install & download">
+    <div class="card">
+      <span class="tag">Hands-on · Install</span>
+      <h2>Installing Docker & downloading software</h2>
+      <ul>
+        <li><b>Windows / macOS:</b> install <b>Docker Desktop</b> (enable WSL 2 on Windows). It includes Engine, CLI and Compose.</li>
+        <li><b>Ubuntu/Linux:</b> use Docker's official apt repository.</li>
+      </ul>
+<pre>docker --version
+docker compose version
+docker run hello-world      <span class="c"># success message = installed OK</span>
+
+<span class="c"># Linux: run without sudo</span>
+sudo usermod -aG docker $USER</pre>
+      <p><b>No manual downloads:</b> software ships as images from <b>Docker Hub</b> (the public registry).</p>
+<pre>docker search nginx
+docker pull nginx:1.27      <span class="c"># download</span>
+docker images               <span class="c"># list local images</span>
+docker run -d --name web -p 8080:80 nginx
+<span class="c"># open http://localhost:8080</span></pre>
+      <div class="why"><span>Tip:</span> prefer <b>Official</b> or <b>Verified</b> images and pin versions (<code>nginx:1.27</code>, not <code>latest</code>).</div>
+    </div>
+  </section>
+
+  <section class="right" data-scene="3" data-title="Commands">
+    <div class="card">
+      <span class="tag">Cheat sheet</span>
+      <h2>Commands you'll use daily</h2>
+<pre>docker ps                 <span class="c"># running containers</span>
+docker ps -a              <span class="c"># all, incl. stopped</span>
+docker stop / start / restart NAME
+docker rm NAME            <span class="c"># delete container</span>
+docker logs -f NAME       <span class="c"># live logs</span>
+docker exec -it NAME sh   <span class="c"># shell inside</span>
+docker rmi IMAGE          <span class="c"># delete image</span>
+docker system df          <span class="c"># disk usage</span>
+docker system prune       <span class="c"># cleanup (careful!)</span></pre>
+      <p>Container exits instantly? Run <code>docker logs NAME</code> — the main process must stay in the <b>foreground</b>.</p>
+    </div>
+  </section>
+
+  <section data-scene="4" data-title="Layers & cache">
+    <div class="card">
+      <span class="tag">Under the hood</span>
+      <h2>Image layers & build cache</h2>
+      <p>Every Dockerfile instruction creates a <b>layer</b>. Layers are cached — if nothing changed in a layer (and those below it), Docker reuses it instantly.</p>
+      <div class="why"><span>Why order matters:</span> copy <code>requirements.txt</code> and install packages <b>before</b> copying your source code. Editing code then rebuilds only the top layer, not the slow <code>pip install</code>.</div>
+<pre>COPY requirements.txt .   <span class="c"># rarely changes → cached</span>
+RUN pip install -r requirements.txt
+COPY . .                  <span class="c"># changes often → last</span></pre>
+      <p>Add a <code>.dockerignore</code> (<code>.git</code>, <code>venv</code>, <code>data</code>, <code>.env</code>) to keep builds fast, small and secret-free.</p>
+    </div>
+  </section>
+
+  <section class="right" data-scene="5" data-title="Ports & volumes">
+    <div class="card">
+      <span class="tag">Connecting to the world</span>
+      <h2>Ports & Volumes</h2>
+      <p><b>Port mapping</b> <code>-p HOST:CONTAINER</code> opens a tunnel from your machine into the isolated container.</p>
+<pre>docker run -p 8080:80 nginx
+<span class="c"># localhost:8080 → container port 80</span></pre>
+      <p>Apps inside containers must listen on <code>0.0.0.0</code> (not 127.0.0.1) to be reachable.</p>
+      <p><b>Volumes</b> keep data alive after a container is deleted — essential for databases, datasets and model outputs.</p>
+<pre>docker run -v mydata:/var/lib/postgresql/data postgres   <span class="c"># named volume</span>
+docker run -v "$(pwd):/app" my-app                       <span class="c"># bind mount (dev)</span></pre>
+      <div class="how"><span>Secrets:</span> pass config via <code>-e KEY=value</code> / env files, never hard-code passwords in the Dockerfile.</div>
+    </div>
+  </section>
+
+  <section data-scene="6" data-title="Compose">
+    <div class="card">
+      <span class="tag">Multi-container apps</span>
+      <h2>Docker Compose & networking</h2>
+      <p>Real apps = API + database + cache + proxy. <b>Compose</b> defines them all in one <code>compose.yaml</code> and starts everything with one command.</p>
+<pre>services:
+  api:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      DATABASE_URL: postgresql://u:p@db:5432/app
+    depends_on: [db]
+  db:
+    image: postgres:16
+    volumes: [pgdata:/var/lib/postgresql/data]
+volumes:
+  pgdata:</pre>
+<pre>docker compose up --build -d
+docker compose logs -f
+docker compose down        <span class="c"># add -v to delete volumes too!</span></pre>
+      <div class="how"><span>How they connect:</span> Compose makes a private network with built-in DNS. The API reaches the database at host <code>db</code> — <b>not</b> <code>localhost</code> (that means "this container").</div>
+    </div>
+  </section>
+
+  <section class="right" data-scene="7" data-title="DevOps">
+    <div class="card">
+      <span class="tag">DevOps</span>
+      <h2>Docker in the DevOps pipeline</h2>
+      <p>Code becomes an image once, then that <b>exact same artifact</b> moves through every stage.</p>
+      <ul>
+        <li><b>Git push</b> triggers CI (GitHub Actions, GitLab CI…)</li>
+        <li><b>Build</b> the image, <b>run tests</b> inside it</li>
+        <li><b>Push</b> to a registry (Docker Hub, ECR, GHCR)</li>
+        <li><b>Deploy</b> by pulling it on servers / Kubernetes / cloud</li>
+      </ul>
+<pre>docker build -t me/app:1.4.2 .
+docker run --rm me/app:1.4.2 pytest
+docker push me/app:1.4.2
+<span class="c"># on server</span>
+docker pull me/app:1.4.2 &amp;&amp; docker run -d -p 8000:8000 me/app:1.4.2</pre>
+      <div class="why"><span>Purpose:</span> repeatable, automated, rollback-friendly deployments. Use version tags, non-root users, health checks and resource limits in production.</div>
+    </div>
+  </section>
+
+  <section data-scene="8" data-title="MLOps & GPU">
+    <div class="card">
+      <span class="tag">MLOps · AI · LLM</span>
+      <h2>Docker for ML, LoRA & GPUs</h2>
+      <p>ML environments are fragile: Python, PyTorch, CUDA, drivers, system libs. Docker freezes them into a <b>reproducible training/inference environment</b>.</p>
+      <ul>
+        <li><b>Host:</b> NVIDIA driver + NVIDIA Container Toolkit</li>
+        <li><b>Container:</b> CUDA runtime, PyTorch, your code</li>
+        <li><b>Flag:</b> <code>--gpus all</code> hands the GPU to the container</li>
+      </ul>
+<pre>docker run --rm --gpus all nvidia/cuda:12.1.1-base-ubuntu22.04 nvidia-smi
+
+docker run --rm --gpus all \
+  -v "$(pwd)/data:/workspace/data" \
+  -v "$(pwd)/outputs:/workspace/outputs" \
+  -v "$(pwd)/hf-cache:/root/.cache/huggingface" \
+  lora-training</pre>
+      <div class="how"><span>Pattern:</span> a <b>training container</b> produces a LoRA adapter into a mounted <code>outputs/</code> volume; a separate <b>inference container</b> (FastAPI) serves the model via <code>-p 8000:8000</code>.</div>
+    </div>
+  </section>
+
+  <section class="right" data-scene="9" data-title="Summary">
+    <div class="card">
+      <span class="tag">Wrap-up</span>
+      <h2>One-line formula</h2>
+      <table>
+        <tr><td><b>Dockerfile</b></td><td>Recipe</td></tr>
+        <tr><td><b>Image</b></td><td>Ready-made package</td></tr>
+        <tr><td><b>Container</b></td><td>Running package</td></tr>
+        <tr><td><b>Volume</b></td><td>Persistent storage</td></tr>
+        <tr><td><b>Network</b></td><td>Connections between containers</td></tr>
+        <tr><td><b>Compose</b></td><td>Manager for many containers</td></tr>
+        <tr><td><b>Registry</b></td><td>Online store for images</td></tr>
+        <tr><td><b>Engine</b></td><td>Background system running it all</td></tr>
+      </table>
+      <p><b>Learning path:</b> hello-world → nginx + ports → Dockerfile for Python → volumes & env → Compose (FastAPI + Postgres) → ML container with GPU → CI/CD with GitHub Actions → registry & cloud.</p>
+      <p><b>Security basics:</b> official images, pinned tags, non-root user, no secrets in images, avoid <code>--privileged</code>, scan & update regularly.</p>
+      <a class="btn" href="#" onclick="window.scrollTo({top:0});return false">↑ Replay from the start</a>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+const canvas=document.getElementById('bg');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x050b18);
+scene.fog=new THREE.FogExp2(0x050b18,0.012);
+const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.1,1000);
+scene.add(new THREE.AmbientLight(0x6688cc,0.8));
+const dl=new THREE.DirectionalLight(0xffffff,0.9);dl.position.set(10,20,15);scene.add(dl);
+const pl=new THREE.PointLight(0x38e1ff,1.2,0);pl.position.set(0,10,10);scene.add(pl);
+
+const BLUE=0x2496ed,CYAN=0x38e1ff,GREEN=0x4ade80,RED=0xfb7185,YEL=0xfbbf24,PUR=0xa78bfa,ORG=0xfb923c;
+const SPACING=60, anims=[];
+
+// ---------- helpers ----------
+function mkGroup(i){const g=new THREE.Group();g.position.set(i*SPACING,0,0);scene.add(g);return g;}
+function box(w,h,d,color,o={}){
+  const {x=0,y=0,z=0,opacity=1,edge=true,glow=0.1}=o;
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color,roughness:.4,metalness:.3,transparent:opacity<1,opacity,emissive:color,emissiveIntensity:glow}));
+  m.position.set(x,y,z);
+  if(edge){m.add(new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry),new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.4})));}
+  return m;
+}
+function sphere(r,color,x=0,y=0,z=0,glow=.6){
+  const m=new THREE.Mesh(new THREE.SphereGeometry(r,24,24),new THREE.MeshStandardMaterial({color,emissive:color,emissiveIntensity:glow,roughness:.3}));
+  m.position.set(x,y,z);return m;
+}
+function label(text,x,y,z,o={}){
+  const {size=1,color='#ffffff',sub=null}=o;
+  const c=document.createElement('canvas');c.width=1024;c.height=256;
+  const g=c.getContext('2d');
+  g.textAlign='center';g.textBaseline='middle';
+  g.shadowColor='rgba(0,0,0,.9)';g.shadowBlur=14;
+  g.fillStyle=color;g.font='bold '+(sub?100:116)+'px Segoe UI, Arial, sans-serif';
+  g.fillText(text,512,sub?96:128);
+  if(sub){g.fillStyle='#9db2d6';g.font='60px Segoe UI, Arial, sans-serif';g.fillText(sub,512,190);}
+  const t=new THREE.CanvasTexture(c);
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}));
+  s.scale.set(size*5,size*1.25,1);s.position.set(x,y,z);s.renderOrder=20;return s;
+}
+function arrow(x,y,z,color=CYAN,len=2){
+  const g=new THREE.Group();
+  const sh=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,len,12),new THREE.MeshStandardMaterial({color,emissive:color,emissiveIntensity:.8}));
+  sh.rotation.z=-Math.PI/2;
+  const hd=new THREE.Mesh(new THREE.ConeGeometry(.35,.7,16),new THREE.MeshStandardMaterial({color,emissive:color,emissiveIntensity:.8}));
+  hd.rotation.z=-Math.PI/2;hd.position.x=len/2+.2;
+  g.add(sh,hd);g.position.set(x,y,z);
+  anims.push(t=>{g.scale.x=1+Math.sin(t*4)*.06;});
+  return g;
+}
+function path(pts,t){ // t 0..1 along polyline
+  const segs=pts.length-1,f=t*segs,i=Math.min(Math.floor(f),segs-1),k=f-i;
+  return new THREE.Vector3().lerpVectors(pts[i],pts[i+1],k);
+}
+function line(a,b,color=0x4b6194){
+  const g=new THREE.BufferGeometry().setFromPoints([a,b]);
+  return new THREE.Line(g,new THREE.LineBasicMaterial({color,transparent:true,opacity:.7}));
+}
+function laptop(color,x){
+  const g=new THREE.Group();
+  g.add(box(4,.25,3,0x1b2a4a,{y:0}),box(4,2.6,.2,color,{y:1.4,z:-1.4,glow:.35}));
+  g.children[1].rotation.x=-.15;g.position.x=x;return g;
+}
+function textSheet(lines,w=3.4,h=4.4){
+  const c=document.createElement('canvas');c.width=340;c.height=440;const g=c.getContext('2d');
+  g.fillStyle='#0b1630';g.fillRect(0,0,340,440);g.strokeStyle='#38e1ff';g.lineWidth=4;g.strokeRect(2,2,336,436);
+  g.font='bold 26px Consolas, monospace';g.fillStyle='#38e1ff';g.fillText('Dockerfile',18,40);
+  g.font='22px Consolas, monospace';g.fillStyle='#e6eefc';
+  lines.forEach((l,i)=>g.fillText(l,18,85+i*42));
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),side:THREE.DoubleSide}));
+  return m;
+}
+
+// ---------- background stars ----------
+(function(){
+  const n=1800,p=new Float32Array(n*3);
+  for(let i=0;i<n;i++){p[i*3]=Math.random()*700-120;p[i*3+1]=(Math.random()-.5)*120;p[i*3+2]=(Math.random()-.5)*160-30;}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(p,3));
+  const s=new THREE.Points(g,new THREE.PointsMaterial({color:0x7fb7ff,size:.25,transparent:true,opacity:.7}));
+  scene.add(s);
+})();
+
+// ---------- hero (scene 0 and 9) ----------
+function buildHero(i){
+  const G=mkGroup(i);
+  G.add(box(14,.6,7,0x16315c,{y:-2.4,glow:.2}));
+  const cols=[BLUE,CYAN,GREEN,YEL,PUR,ORG,RED,BLUE];
+  const cs=[];let k=0;
+  for(let r=0;r<2;r++)for(let c=0;c<4;c++){
+    const b=box(2.4,1.8,2.4,cols[k++],{x:-4.8+c*3.2,y:-1+r*2.1,z:r? -1.6:1.4,glow:.25});
+    G.add(b);cs.push(b);
+  }
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(7.5,.08,12,100),new THREE.MeshBasicMaterial({color:CYAN,transparent:true,opacity:.6}));
+  ring.rotation.x=Math.PI/2.4;G.add(ring);
+  const ring2=ring.clone();ring2.scale.setScalar(.8);G.add(ring2);
+  G.add(label('DOCKER',0,5.2,0,{size:1.7,color:'#38e1ff'}));
+  G.add(label('Build · Ship · Run — anywhere',0,3.6,0,{size:.8,color:'#e6eefc'}));
+  anims.push(t=>{
+    cs.forEach((b,j)=>{b.position.y+=Math.sin(t*1.6+j)*.003;b.rotation.y=Math.sin(t*.7+j)*.15;});
+    ring.rotation.z=t*.3;ring2.rotation.z=-t*.4;
+  });
+  return G;
+}
+
+// ---------- scene 1: problem ----------
+function buildProblem(i){
+  const G=mkGroup(i);
+  const a=laptop(GREEN,-8),b=laptop(RED,8);G.add(a,b);
+  G.add(label('Developer laptop',-8,4.6,0,{size:.9,sub:'Python 3.11 ✓'}));
+  G.add(label('Server / teammate',8,4.6,0,{size:.9,sub:'Python 3.9 ✗',color:'#fb7185'}));
+  const code=box(1.2,1.2,1.2,YEL,{glow:.5});G.add(code);
+  const ok=sphere(.5,GREEN,-8,2,.2),bad=[];
+  for(let j=0;j<6;j++){const s=sphere(.22,RED,8,2,0);bad.push(s);G.add(s);}
+  G.add(label('"It works on my machine!"',0,-3.5,0,{size:1,color:'#fbbf24'}));
+  anims.push(t=>{
+    const p=(t*.25)%1;
+    if(p<.5){code.position.set(-8+p*2*16,2+Math.sin(p*Math.PI*2)*1.5,1);code.material.color.setHex(YEL);code.material.emissive.setHex(YEL);code.rotation.y=t*3;}
+    else{const q=(p-.5)*2;code.position.set(8-q*3,2+Math.abs(Math.sin(q*6))*1.2,1);code.material.color.setHex(RED);code.material.emissive.setHex(RED);code.rotation.y=t*8;}
+    bad.forEach((s,j)=>{const an=t*2+j*1.05;s.position.set(8+Math.cos(an)*3,2.2+Math.sin(an*1.3)*.9,Math.sin(an)*3);});
+  });
+  return G;
+}
+
+// ---------- scene 2: VM vs container ----------
+function buildVM(i){
+  const G=mkGroup(i);
+  // VMs left
+  const L=new THREE.Group();L.position.x=-9;G.add(L);
+  L.add(box(8.5,.5,4,0x334155,{y:-3}));
+  L.add(box(8.5,.5,4,0x7c3aed,{y:-2.3,glow:.2}));
+  for(let k=0;k<3;k++){
+    const x=-2.7+k*2.7;
+    L.add(box(2.2,1.3,3,RED,{x,y:-1.2,glow:.25}));
+    L.add(box(2.2,.7,3,YEL,{x,y:-.2,glow:.25}));
+    L.add(box(2.2,.9,3,GREEN,{x,y:.6,glow:.3}));
+  }
+  L.add(label('Virtual Machines',0,3.2,0,{size:1,color:'#fb7185'}));
+  L.add(label('each VM = full guest OS',0,2.2,0,{size:.6}));
+  L.add(label('Guest OS ×3',0,-1.2,2.2,{size:.5,color:'#fecaca'}));
+  L.add(label('Hypervisor',4.8,-2.3,0,{size:.5,color:'#ddd6fe'}));
+  // containers right
+  const R=new THREE.Group();R.position.x=9;G.add(R);
+  R.add(box(8.5,.5,4,0x334155,{y:-3}));
+  R.add(box(8.5,.5,4,BLUE,{y:-2.3,glow:.25}));
+  R.add(box(8.5,.6,4,0x0ea5a5,{y:-1.6,glow:.25}));
+  const cont=[];
+  for(let k=0;k<3;k++){
+    const x=-2.7+k*2.7;
+    const b1=box(2.2,.7,3,YEL,{x,y:-.9,glow:.25}),b2=box(2.2,.9,3,GREEN,{x,y:-.1,glow:.3});
+    R.add(b1,b2);cont.push(b1,b2);
+  }
+  R.add(label('Containers',0,3.2,0,{size:1,color:'#4ade80'}));
+  R.add(label('share ONE host kernel — tiny & fast',0,2.2,0,{size:.6}));
+  R.add(label('Docker Engine',4.9,-1.6,0,{size:.5,color:'#99f6e4'}));
+  R.add(label('Host OS (kernel)',4.9,-2.3,0,{size:.5,color:'#bfdbfe'}));
+  anims.push(t=>{cont.forEach((b,j)=>{b.position.y+=Math.sin(t*2+j)*.002;});});
+  return G;
+}
+
+// ---------- scene 3: dockerfile -> image -> container ----------
+function buildFlow(i){
+  const G=mkGroup(i);
+  const sheet=textSheet(['FROM python:3.11','WORKDIR /app','COPY req.txt .','RUN pip install','COPY . .','CMD python app']);
+  sheet.position.set(-10,1,0);G.add(sheet);
+  G.add(label('Dockerfile',-10,-2.2,0,{size:.9,sub:'the recipe'}));
+  G.add(arrow(-6.2,1,0,CYAN,2));G.add(label('docker build',-6.2,2.2,0,{size:.6,color:'#38e1ff'}));
+  // image layers
+  const layers=[];const lc=[0x1e40af,0x2563eb,BLUE,0x38bdf8,CYAN];
+  lc.forEach((c,k)=>{const l=box(4,.6,4,c,{y:-1.2+k*.75,opacity:.9,glow:.3});G.add(l);layers.push(l);});
+  G.add(label('Image',0,-2.6,0,{size:.9,sub:'read-only layers'}));
+  G.add(arrow(3.6,1,0,GREEN,2));G.add(label('docker run',3.6,2.2,0,{size:.6,color:'#4ade80'}));
+  // containers
+  const cs=[];
+  for(let k=0;k<3;k++){const c=box(2,2,2,GREEN,{x:9.5,y:-1.2+k*0+0,z:-3+k*3,glow:.35});c.position.y=.2;G.add(c);cs.push(c);}
+  G.add(label('Containers',9.5,-2.6,0,{size:.9,sub:'running processes'}));
+  G.add(label('one image → many containers',0,5,0,{size:.9,color:'#fbbf24'}));
+  const packet=sphere(.3,YEL,0,0,0,1);G.add(packet);
+  const pts=[new THREE.Vector3(-10,1,.5),new THREE.Vector3(0,1.5,.5),new THREE.Vector3(9.5,.5,0)];
+  anims.push(t=>{
+    layers.forEach((l,k)=>{l.position.y=-1.2+k*.75+Math.sin(t*2+k)*.08;l.rotation.y=Math.sin(t*.5)*.1;});
+    cs.forEach((c,k)=>{c.rotation.y=t*.8+k;c.position.y=.2+Math.sin(t*2+k*1.3)*.25;});
+    packet.position.copy(path(pts,(t*.2)%1));
+    sheet.rotation.y=Math.sin(t*.6)*.25;
+  });
+  return G;
+}
+
+// ---------- scene 4: layers & cache ----------
+function buildLayers(i){
+  const G=mkGroup(i);
+  const data=[['FROM python:3.11-slim',0x1e40af,true],['WORKDIR /app',0x2563eb,true],['COPY requirements.txt',BLUE,true],['RUN pip install',0x0ea5e9,true],['COPY . .  (code changed!)',ORG,false],['CMD ["python","app.py"]',YEL,false]];
+  const top=[];
+  data.forEach((d,k)=>{
+    const l=box(6,.8,6,d[1],{y:-3+k*1.05,glow:d[2]?.15:.45,opacity:.92});G.add(l);
+    G.add(label(d[0],-.2,-3+k*1.05,3.4,{size:.5}));
+    G.add(label(d[2]?'✔ CACHED':'↻ REBUILT',7.2,-3+k*1.05,0,{size:.55,color:d[2]?'#4ade80':'#fb923c'}));
+    if(!d[2])top.push(l);
+  });
+  G.add(label('Build cache',0,4.4,0,{size:1,color:'#38e1ff'}));
+  G.add(label('unchanged layers are reused instantly',0,3.4,0,{size:.6}));
+  anims.push(t=>{top.forEach((l,j)=>{l.material.emissiveIntensity=.4+Math.sin(t*4+j)*.3;});G.rotation.y=Math.sin(t*.3)*.25;});
+  return G;
+}
+
+// ---------- scene 5: ports & volumes ----------
+function buildPorts(i){
+  const G=mkGroup(i);
+  const host=box(13,6.5,7,0x1d4ed8,{opacity:.12,glow:0,x:2.5});G.add(host);
+  G.add(label('Host machine (your laptop / server)',2.5,4.3,0,{size:.8,color:'#93c5fd'}));
+  const cont=box(3.4,3.4,3.4,GREEN,{x:2,y:.6,glow:.35});G.add(cont);
+  G.add(label('Container',2,3.1,0,{size:.6,sub:'port 80'}));
+  // browser
+  const br=box(.3,3,3.6,0x0f172a,{x:-9.5,y:.6,glow:.1});G.add(br);
+  G.add(label('Browser',-9.5,3,0,{size:.7,sub:'localhost:8080'}));
+  const tube=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,7.6,20,1,true),new THREE.MeshStandardMaterial({color:ORG,transparent:true,opacity:.35,emissive:ORG,emissiveIntensity:.5,side:THREE.DoubleSide}));
+  tube.rotation.z=Math.PI/2;tube.position.set(-5.7,.6,0);G.add(tube);
+  G.add(label('-p 8080:80',-5.7,-1,0,{size:.8,color:'#fb923c'}));
+  const pk=sphere(.3,YEL,0,0,0,1);G.add(pk);
+  // volume
+  const vol=new THREE.Mesh(new THREE.CylinderGeometry(1.6,1.6,2,32),new THREE.MeshStandardMaterial({color:PUR,emissive:PUR,emissiveIntensity:.35,transparent:true,opacity:.9}));
+  vol.position.set(6.5,-1.7,0);G.add(vol);
+  G.add(label('Volume',6.5,-3.6,0,{size:.7,sub:'data survives'}));
+  const state=label('',2,-1.8,0,{size:.7});G.add(state);
+  const st=label('container deleted → recreated, data stays ✔',2.5,-5.2,0,{size:.7,color:'#a78bfa'});G.add(st);
+  anims.push(t=>{
+    pk.position.set(-9.3+((t*.5)%1)*9,.6,0);
+    const c=t%8;let s=1;
+    if(c>5&&c<6)s=1-(c-5);else if(c>=6&&c<7)s=c-6;
+    cont.scale.setScalar(Math.max(.001,s));
+    vol.rotation.y=t*.6;
+  });
+  return G;
+}
+
+// ---------- scene 6: compose network ----------
+function buildCompose(i){
+  const G=mkGroup(i);
+  G.add(box(22,10,6,BLUE,{opacity:.06,glow:0,y:.5}));
+  G.add(label('Compose network (built-in DNS)',0,6.4,0,{size:.8,color:'#93c5fd'}));
+  const nodes={nginx:[-8,0,0,GREEN],api:[-1.5,2,0,BLUE],db:[6.5,2.5,0,PUR],redis:[3,-3,0,RED]};
+  const V={};
+  for(const k in nodes){const n=nodes[k];V[k]=new THREE.Vector3(n[0],n[1],n[2]);
+    const b=box(3,2.2,2.2,n[3],{x:n[0],y:n[1],z:n[2],glow:.35});G.add(b);
+    G.add(label(k,n[0],n[1]+2,0,{size:.8}));
+    anims.push(t=>{b.rotation.y=Math.sin(t+n[0])*.2;});}
+  const edges=[['nginx','api'],['api','db'],['api','redis']];
+  const pk=[];
+  edges.forEach((e,j)=>{G.add(line(V[e[0]],V[e[1]]));
+    for(let q=0;q<2;q++){const s=sphere(.22,YEL,0,0,0,1);G.add(s);pk.push([s,e,q*.5+j*.17]);}});
+  G.add(label('host = "db"  ✔     host = "localhost"  ✘',0,-5.4,0,{size:.7,color:'#fbbf24'}));
+  anims.push(t=>{pk.forEach(p=>{const f=(t*.35+p[2])%1;const pos=V[p[1][0]].clone().lerp(V[p[1][1]],f);p[0].position.copy(pos);});});
+  return G;
+}
+
+// ---------- scene 7: devops pipeline ----------
+function buildDevops(i){
+  const G=mkGroup(i);
+  G.add(box(30,.3,3,0x1e293b,{y:-2.2}));
+  const xs=[-12,-6,0,6,12];
+  const names=[['Code','git commit'],['Git','push triggers CI'],['CI Build','docker build + test'],['Registry','docker push'],['Server','docker run']];
+  const cols=[YEL,ORG,BLUE,PUR,GREEN];
+  const st=[];
+  xs.forEach((x,k)=>{
+    let m;
+    if(k===1)m=new THREE.Mesh(new THREE.OctahedronGeometry(1.4),new THREE.MeshStandardMaterial({color:cols[k],emissive:cols[k],emissiveIntensity:.35}));
+    else if(k===2)m=new THREE.Mesh(new THREE.TorusKnotGeometry(.9,.3,80,12),new THREE.MeshStandardMaterial({color:cols[k],emissive:cols[k],emissiveIntensity:.35}));
+    else if(k===3)m=new THREE.Mesh(new THREE.CylinderGeometry(1.3,1.3,2.2,24),new THREE.MeshStandardMaterial({color:cols[k],emissive:cols[k],emissiveIntensity:.35}));
+    else m=box(2.4,2.4,2.4,cols[k],{glow:.35});
+    m.position.set(x,0,0);G.add(m);st.push(m);
+    G.add(label(names[k][0],x,3,0,{size:.8}));
+    G.add(label(names[k][1],x,2.1,0,{size:.5,color:'#9db2d6'}));
+    if(k<4)G.add(arrow(x+3,-1,0,CYAN,1.6));
+  });
+  const pkg=box(1,1,1,YEL,{y:-1.2,glow:.6});G.add(pkg);
+  G.add(label('The SAME image moves through every stage → identical everywhere',0,-4.6,0,{size:.8,color:'#4ade80'}));
+  anims.push(t=>{
+    st.forEach((m,k)=>{m.rotation.y=t*(.4+k*.1);});
+    const f=(t*.07)%1;pkg.position.x=-12+f*24;pkg.position.y=-1.2+Math.abs(Math.sin(t*5))*.3;pkg.rotation.y=t*2;
+    const c=f<.4?YEL:(f<.55?BLUE:GREEN);
+    pkg.material.color.setHex(c);pkg.material.emissive.setHex(c);
+  });
+  return G;
+}
+
+// ---------- scene 8: MLOps / GPU ----------
+function buildGPU(i){
+  const G=mkGroup(i);
+  const chip=box(7,.8,5,0x0f3d1e,{y:-3,glow:.35});G.add(chip);
+  const core=box(3,.3,3,GREEN,{y:-2.45,glow:.9});G.add(core);
+  for(let k=0;k<10;k++){G.add(box(.15,.3,.6,0xcbd5e1,{x:-3+k*.67,y:-3,z:2.8,edge:false}));G.add(box(.15,.3,.6,0xcbd5e1,{x:-3+k*.67,y:-3,z:-2.8,edge:false}));}
+  G.add(label('NVIDIA GPU',0,-4.4,0,{size:.8,color:'#4ade80'}));
+  const drv=box(8,.6,5.5,0x14532d,{y:-1.7,opacity:.8,glow:.2});G.add(drv);
+  G.add(label('Host: NVIDIA driver',-9,-1.7,0,{size:.6,color:'#86efac'}));
+  const tk=box(8,.6,5.5,0x0ea5a5,{y:-.9,opacity:.8,glow:.25});G.add(tk);
+  G.add(label('Container Toolkit  (--gpus all)',-9.5,-.9,0,{size:.6,color:'#99f6e4'}));
+  const ct=box(6,3.8,4.6,BLUE,{y:0,glow:.05,opacity:.2});
+  ct.position.y=1.5;G.add(ct);
+  const cuda=box(5,.7,4,0x65a30d,{y:.3,glow:.4}),torch=box(5,.7,4,ORG,{y:1.1,glow:.4}),code=box(5,.7,4,PUR,{y:1.9,glow:.4}),mdl=box(5,.7,4,CYAN,{y:2.7,glow:.4});
+  G.add(cuda,torch,code,mdl);
+  G.add(label('CUDA runtime',8.8,.3,0,{size:.55}));G.add(label('PyTorch',8.8,1.1,0,{size:.55}));G.add(label('train_lora.py',8.8,1.9,0,{size:.55}));G.add(label('Model / LoRA',8.8,2.7,0,{size:.55}));
+  G.add(label('Container',0,4.9,0,{size:.9,color:'#60a5fa'}));
+  const N=40,pts=[];
+  for(let k=0;k<N;k++){const s=sphere(.09,CYAN,0,0,0,1);G.add(s);pts.push([s,Math.random(),(Math.random()-.5)*3,(Math.random()-.5)*3]);}
+  anims.push(t=>{
+    core.material.emissiveIntensity=.6+Math.sin(t*5)*.4;
+    pts.forEach(p=>{const f=(t*.3+p[1])%1;p[0].position.set(p[2],-2.3+f*5.5,p[3]);});
+    [cuda,torch,code,mdl].forEach((b,j)=>{b.position.x=Math.sin(t*1.5+j)*.12;});
+  });
+  return G;
+}
+
+// build all
+const builders=[buildHero,buildProblem,buildVM,buildFlow,buildLayers,buildPorts,buildCompose,buildDevops,buildGPU,buildHero];
+const groups=builders.map((f,i)=>f(i));
+// camera presets [distance, height]
+const cams=[[22,3],[24,4],[26,3],[27,4],[20,3],[24,3],[26,3],[30,4],[24,4],[22,3]];
+
+// ---------- interaction ----------
+let current=0,mx=0,my=0;
+addEventListener('mousemove',e=>{mx=(e.clientX/innerWidth-.5)*2;my=(e.clientY/innerHeight-.5)*2;});
+const sections=[...document.querySelectorAll('section')];
+const dots=document.getElementById('dots');
+sections.forEach((s,k)=>{const a=document.createElement('a');a.href='#';a.title=s.dataset.title;a.onclick=e=>{e.preventDefault();s.scrollIntoView({behavior:'smooth',block:'center'});};dots.appendChild(a);});
+const dotEls=[...dots.children];
+const bar=document.getElementById('progress');
+function onScroll(){
+  const mid=innerHeight/2;let best=0,bd=1e9;
+  sections.forEach((s,k)=>{const r=s.getBoundingClientRect();const d=Math.abs(r.top+r.height/2-mid);if(d<bd){bd=d;best=k;}});
+  sections.forEach((s,k)=>s.classList.toggle('active',k===best));
+  dotEls.forEach((d,k)=>d.classList.toggle('on',k===best));
+  current=+sections[best].dataset.scene;
+  const h=document.documentElement.scrollHeight-innerHeight;
+  bar.style.width=(h>0?scrollY/h*100:0)+'%';
+}
+addEventListener('scroll',onScroll,{passive:true});onScroll();
+addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();});
+
+// ---------- loop ----------
+const camPos=new THREE.Vector3(0,3,22),camLook=new THREE.Vector3();
+const clock=new THREE.Clock();
+function frame(){
+  const t=clock.getElapsedTime();
+  anims.forEach(a=>a(t));
+  const desk=innerWidth>900;
+  const [d,h]=cams[current];
+  const cx=current*SPACING;
+  const dist=desk?d:d*1.25;
+  const shiftX=desk?(sections[0]&&document.querySelector('section.active.right')?4:-4):0;
+  const shiftY=desk?0:-3.2;
+  const target=new THREE.Vector3(cx+shiftX,shiftY,0);
+  const want=new THREE.Vector3(cx+shiftX+mx*4,h+shiftY-my*2,dist);
+  camPos.lerp(want,.045);camLook.lerp(target,.06);
+  camera.position.copy(camPos);camera.lookAt(camLook);
+  renderer.render(scene,camera);
+  requestAnimationFrame(frame);
+}
+frame();
+})();
+</script>
+</body>
+</html>
